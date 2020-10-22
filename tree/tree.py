@@ -4,6 +4,9 @@ import json
 from collections import defaultdict, OrderedDict
 
 class TreeNode(object):
+    """
+    search tree
+    """
 
     def __init__(self, height=None):
         self._height = height
@@ -11,7 +14,13 @@ class TreeNode(object):
         self._tmp = self._root
         self._floor = 0
 
-    def insert(self, key, val):
+    def _insert(self, key, val):
+        """
+        insert operate
+        :param key:
+        :param val:
+        :return:
+        """
         if key == None:
             self._floor += 1
             return
@@ -32,7 +41,36 @@ class TreeNode(object):
                 self._tmp = tmp
             self._floor += 1
 
+    def insert(self, l):
+        """
+        signle insert
+        :param l: list
+        :return:
+        """
+        pre = None
+        for j in l:
+            if n.search(j):
+                pre = j
+            else:
+                n._insert(pre, j)
+                pre = j
+        self._reload()
+
+    def batchinsert(self, l):
+        """
+        batch insert
+        :param l: list:list
+        :return:
+        """
+        for j in l:
+            self.insert(j)
+
     def search(self, key):
+        """
+        key contains in tree or not
+        :param key:
+        :return: bool
+        """
         if isinstance(self._tmp, dict):
             if key in self._tmp and len(self._tmp[key]) > 0:
                 self._tmp = self._tmp[key]
@@ -54,42 +92,59 @@ class TreeNode(object):
             return False
 
     def delete(self, l):
-        d = OrderedDict()
-        for key in l:
-            if self.search(key):
-                d[key] = len(self._tmp)
-        t = d.items()
-        if len(t) == len(l):
-            #node leaf
-            if t[-2][1] > 1:
-                self._tmp.remove(t[-1][0])
-                return True
-            else:
-                print t
-                index = None
-                for i, k in enumerate(t):
-                    if k[1] > 1 and i != len(t)-1:
-                        index = i
-                print "gggggggg"
-                print index
-                if index:
-                    self.reload()
-                    r_d = None
-                    for key in t[:index+1]:
-                        self.search(key[0])
-                    print t[:index+1]
-                    print self._tmp
-                    if isinstance(self._tmp, list):
-                        for d in self._tmp:
-                            if t[index+1][0] in d:
-                                r_d = d
-                        print "r_d", r_d
-                        if r_d:
-                            self._tmp.remove(r_d)
-
+        """
+        delete node
+        :param l: list
+        :return: bool
+        """
+        try:
+            d = OrderedDict()
+            for key in l:
+                if self.search(key):
+                    d[key] = len(self._tmp)
+            t = d.items()
+            if len(t) == len(l):
+                #node leaf
+                if t[-2][1] > 1:
+                    self._tmp.remove(t[-1][0])
+                    return True
                 else:
-                    # all node 1 and node leaf 1
-                    self._root.pop(l[0], None)
+                    index = None
+                    for i, k in enumerate(t):
+                        if k[1] > 1 and i != len(t)-1:
+                            index = i
+                    if index:
+                        self._reload()
+                        r_d = None
+                        for key in t[:index+1]:
+                            self.search(key[0])
+                        if isinstance(self._tmp, list):
+                            for d in self._tmp:
+                                if t[index+1][0] in d:
+                                    r_d = d
+                            if r_d:
+                                self._tmp.remove(r_d)
+                                return True
+
+                    else:
+                        # all node 1 and node leaf 1
+                        self._root.pop(l[0], None)
+                        return True
+            else:
+                return False
+        finally:
+            self._reload()
+
+    def modify(self, orign, new):
+        """
+
+        :param orign: origin load
+        :param new: modify new load
+        :return: bool
+        """
+        #first: delete origin load second: insert new load
+        if self.delete(orign):
+            self.insert(new)
 
     @property
     def floor(self):
@@ -99,44 +154,19 @@ class TreeNode(object):
     def root(self):
         return self._root
 
-    def reload(self):
+    def _reload(self):
         self._tmp = self._root
         self._floor = 0
 
 if __name__ == "__main__":
     l = [1, 2, 4, 5]
     n = TreeNode(height=len(l))
-    pre = None
-    for i in l:
-        n.insert(pre, i)
-        pre = i
-    n.reload()
-    print n.root
     l1 = [1, 2, 4, 6]
-    pre = None
-    for j in l1:
-        if n.search(j):
-            pre = j
-        else:
-            n.insert(pre, j)
-            pre = j
-
-    # print json.dumps(dict(n.root))
-    n.reload()
     l2 = [1, 2, 5, 6]
-    for j in l2:
-        if n.search(j):
-            pre = j
-        else:
-            n.insert(pre, j)
-            pre = j
-
-    n.reload()
-    l3 = l2
-    # for j in l3:
-    #     n.search(j)
-    #     print len(n._tmp)
-    #     print n._tmp
-    print n.delete(l3)
+    all = [l, l2]
+    n.batchinsert(all)
+    n.modify(l1, l2)
+    # l3 = l2
+    # print n.delete(l1)
     print n.root
     print n._floor
